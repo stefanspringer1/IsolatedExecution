@@ -11,17 +11,17 @@ distributed actor IsolatedExecution {
     private var data: DistObject?
 
     // store data in actor
-    public func store(_ newData: DistObject) {
+    distributed func store(_ newData: DistObject) {
         self.data = newData
     }
 
     // receive data from other actors
-    public func receive() -> DistObject? {
+    distributed func receive() -> DistObject? {
         return self.data
     }
 
     // send data to other actors
-    public func send(to recipient: IsolatedExecution) async throws {
+    distributed func send(to recipient: IsolatedExecution) async throws {
         guard let currentData = self.data else { 
             throw DistObjectError.noDataToSend
         }

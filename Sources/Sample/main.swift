@@ -4,8 +4,10 @@ struct MyData: DistObject {
     let message: String
 }
 
-let actorA = IsolatedExecution()
-let actorB = IsolatedExecution()
+let actorA_ID = webSocketSystem.getId() 
+let actorB_ID = webSocketSystem.getId() 
+let actorA = IsolatedExecution(id: actorA_ID)
+let actorB = IsolatedExecution(id: actorB_ID)
 
 async {
     // create message
