@@ -1,3 +1,3 @@
 # IsolatedExecution
 
-A description of this package.
+Realize isolated execution of programs including two-way communication
