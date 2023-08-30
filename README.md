@@ -1,3 +1,4 @@
-# IsolatedExecution
 
-Realize isolated execution of programs including two-way communication
+
+## Ausführung
+https://github.com/apple/swift-distributed-actors/tree/main clonen und im Verzeichnis daneben ("../") ablegen.

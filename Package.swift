@@ -1,31 +1,68 @@
-// swift-tools-version: 5.8
+// swift-tools-version:5.7
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
+var globalSwiftSettings: [SwiftSetting]
+
+var globalConcurrencyFlags: [String] = [
+    "-Xfrontend", "-disable-availability-checking", // TODO(distributed): remove this flag
+]
+
+globalSwiftSettings = [
+    SwiftSetting.unsafeFlags(globalConcurrencyFlags),
+]
+
+var targets: [PackageDescription.Target] = [
+    // ==== ----------------------------------------------------------------------------------------------------------------
+    // MARK: Samples
+
+    .executableTarget(
+        name: "IsolatedExecutionDemo",
+        dependencies: [
+            .product(name: "DistributedCluster", package: "swift-distributed-actors"),
+        ],
+        path: "Sources/IsolatedExecutionDemo"
+    ),
+]
+
+var dependencies: [Package.Dependency] = [
+    // ~~~~~~~     parent       ~~~~~~~
+    .package(name: "swift-distributed-actors", path: "../swift-distributed-actors")
+
+    // ~~~~~~~ only for samples ~~~~~~~
+]
+
 let package = Package(
-    name: "IsolatedExecution",
+    name: "swift-distributed-actors-samples",
+    platforms: [
+        // we require the 'distributed actor' language and runtime feature:
+        .iOS(.v16),
+        .macOS(.v13),
+        .tvOS(.v16),
+        .watchOS(.v9),
+    ],
     products: [
-        .library(
-            name: "IsolatedExecution",
-            targets: ["IsolatedExecution"]),
+        /* ---  samples --- */
+
         .executable(
             name: "IsolatedExecutionDemo",
             targets: ["IsolatedExecutionDemo"]
-        )
+        ),
     ],
-    dependencies: [
-        //.package(url: "https://github.com/apple/swift-distributed-actors", from: "0.7.0")
-    ],
-    targets: [
-        .target(
-            name: "IsolatedExecution",
-            dependencies: []),
-        .executableTarget(
-            name: "IsolatedExecutionDemo",
-            dependencies: ["IsolatedExecution",
-            "DistributedCluster"],
-            path: "Sources/Sample"
-        )
-    ]
+
+    dependencies: dependencies,
+
+    targets: targets.map { target in
+        var swiftSettings = target.swiftSettings ?? []
+        if target.type != .plugin {
+            swiftSettings.append(contentsOf: globalSwiftSettings)
+        }
+        if !swiftSettings.isEmpty {
+            target.swiftSettings = swiftSettings
+        }
+        return target
+    },
+
+    cxxLanguageStandard: .cxx11
 )
