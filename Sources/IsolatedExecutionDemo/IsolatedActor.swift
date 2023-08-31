@@ -61,18 +61,6 @@ distributed actor IsolatedActor<T>: Codable where T: Codable  {
         }
     }
 
-    distributed func stopSending() {
-        self.log.info("\(self.name) is done eating and replaced both dist objects!")
-        Task {
-            do {
-                try await self.data.putBack()
-            } catch {
-                self.log.warning("Failed putting back \(data): \(error)")
-            }
-        }
-        self.send()
-    }
-
     private func distObjectTaken(_ distObject: DistObject<T>) {
         if self.state == .sending { // We couldn't get the dist object and have already gone back to sending.
             Task { try await distObject.putBack() }
