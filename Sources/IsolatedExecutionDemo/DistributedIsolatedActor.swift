@@ -6,7 +6,7 @@ final class DistributedIsolatedActor {
     func run(for duration: Duration) async throws {
         let systemA = await ClusterSystem("Node-A") { settings in
             settings.bindPort = 1111
-            settings.logging.logLevel = .error
+            // settings.logging.logLevel = .error
         }
         let systemB = await ClusterSystem("Node-B") { settings in
             settings.bindPort = 2222
@@ -14,7 +14,7 @@ final class DistributedIsolatedActor {
         }
         let systemC = await ClusterSystem("Node-C") { settings in
             settings.bindPort = 3333
-            settings.logging.logLevel = .error
+            // settings.logging.logLevel = .error
         }
         let systems = [systemA, systemB, systemC]
 
@@ -31,13 +31,13 @@ final class DistributedIsolatedActor {
 
         // prepare 5 DistObjects, that the IsolatedActors will send each other:
         // Node A
-        let distObject1 = DistObject<String>(value: "fork-1", actorSystem: systemA)
+        let distObject1 = DistObject<String>(value: "hello-1", actorSystem: systemA)
         // Node B
-        let distObject2 = DistObject<String>(value: "fork-2", actorSystem: systemB)
-        let distObject3 = DistObject<String>(value: "fork-3", actorSystem: systemB)
+        let distObject2 = DistObject<String>(value: "hello-2", actorSystem: systemB)
+        let distObject3 = DistObject<String>(value: "hello-3", actorSystem: systemB)
         // Node C
-        let distObject4 = DistObject<String>(value: "fork-4", actorSystem: systemC)
-        let distObject5 = DistObject<String>(value: "fork-5", actorSystem: systemC)
+        let distObject4 = DistObject<String>(value: "hello-4", actorSystem: systemC)
+        let distObject5 = DistObject<String>(value: "hello-5", actorSystem: systemC)
 
         // // 5 IsolatedActors, exchanging DistObjects between them:
         self.isolatedActors = [
