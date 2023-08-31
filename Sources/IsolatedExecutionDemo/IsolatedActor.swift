@@ -25,12 +25,10 @@ distributed actor IsolatedActor<T>: Codable where T: Codable  {
     }
 
     distributed func send() {
-        if case .takingDistObjects(let distObjectIsTaken, let rightIsTaken) = self.state {
-            if distObjectIsTaken {
-                Task {
-                    try await data.putBack()
-                    self.log.info("\(self.name) put back DistObject!")
-                }
+        if case .takingDistObject = self.state {
+            Task {
+                try await data.putBack()
+                self.log.info("\(self.name) put back DistObject!")
             }
         }
 
@@ -48,7 +46,7 @@ distributed actor IsolatedActor<T>: Codable where T: Codable  {
             return
         }
 
-        self.state = .takingDistObjects(leftTaken: false, rightTaken: false)
+        self.state = .takingDistObject
 
         do {
             let tookLeft = try await self.data.take()
@@ -76,24 +74,21 @@ distributed actor IsolatedActor<T>: Codable where T: Codable  {
     }
 
     private func distObjectTaken(_ distObject: DistObject<T>) {
-        if self.state == .sending { // We couldn't get the first fork and have already gone back to sending.
+        if self.state == .sending { // We couldn't get the dist object and have already gone back to sending.
             Task { try await distObject.putBack() }
             return
         }
 
-        guard case .takingDistObjects(let dataIsTaken, let rightForkIsTaken) = self.state else {
-            self.log.error("Received distObject \(distObject) but was not in .takingDistObjects state. State was \(self.state)! Ignoring...")
+        guard case .takingDistObject = self.state else {
+            self.log.error("Received distObject \(distObject) but was not in .takingDistObject state. State was \(self.state)! Ignoring...")
             Task { try await distObject.putBack() }
             return
         }
 
         switch distObject {
         case self.data:
-            self.log.info("\(self.name) received their left distObject!")
-            self.state = .takingDistObjects(leftTaken: true, rightTaken: rightForkIsTaken)
-        case self.rightFork:
-            self.log.info("\(self.name) received their right distObject!")
-            self.state = .takingDistObjects(leftTaken: dataIsTaken, rightTaken: true)
+            self.log.info("\(self.name) received their distObject!")
+            self.state = .takingDistObject
         default:
             self.log.error("Received unknown distObject! Got: \(distObject). Known distObjects: \(self.data), \(self.rightFork)")
         }
@@ -103,7 +98,7 @@ distributed actor IsolatedActor<T>: Codable where T: Codable  {
 extension IsolatedActor {
     private enum State: Equatable {
         case sending
-        case takingDistObjects(leftTaken: Bool, rightTaken: Bool)
+        case takingDistObject
         case eating
     }
 }
