@@ -7,19 +7,16 @@ distributed actor IsolatedActor<T>: Codable where T: Codable  {
     private lazy var log: Logger = .init(actor: self)
 
     private let data: DistObject<T>
-    private var rightFork: DistObject<T>
     private var state: State = .sending
 
     init(name: String, data: DistObject<T>, actorSystem: ActorSystem) {
         self.actorSystem = actorSystem
         self.name = name
         self.data = data
-        self.rightFork = data
         self.log.info("\(self.name) joined the cluster!")
 
         Task {
 //            context.watch(self.data)
-//            context.watch(self.rightFork)
             try await self.send()
         }
     }
@@ -78,7 +75,7 @@ distributed actor IsolatedActor<T>: Codable where T: Codable  {
             self.log.info("\(self.name) received their distObject!")
             self.state = .takingDistObject
         default:
-            self.log.error("Received unknown distObject! Got: \(distObject). Known distObjects: \(self.data), \(self.rightFork)")
+            self.log.error("Received unknown distObject! Got: \(distObject). Known distObject: \(self.data)")
         }
     }
 }
