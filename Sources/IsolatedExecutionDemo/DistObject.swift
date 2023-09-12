@@ -1,6 +1,24 @@
 import Distributed
 import DistributedCluster
 import Logging
+import Foundation
+
+
+/// A work item that represents a document given via an URL (e.g. a file on the disk).
+struct DocumentWorkItem: CustomStringConvertible, WorkItemWithID {
+    let documentURL: URL
+    let documentSize: Double // document size will be translated into seconds for the processing
+    let _id: String
+    var id: String { _id }
+    
+    init(documentURL: URL, documentSize: Double, id: String) {
+        self.documentURL = documentURL
+        self.documentSize = documentSize
+        self._id = id
+    }
+    
+    public var description: String { "work item: document \(documentURL.description)" }
+}
 
 distributed actor DistObject<T>: Codable where T: Codable {
     private lazy var log: Logger = {
