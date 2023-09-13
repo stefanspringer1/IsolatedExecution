@@ -14,7 +14,7 @@ typealias DefaultDistributedActorSystem = ClusterSystem
         print("|        USAGE: swift run IsolatedExecutionDemo           |")
         print("===-----------------------------------------------------===")
 
-        LoggingSystem.bootstrap(SamplePrettyLogHandler.init)
+        // LoggingSystem.bootstrap(SamplePrettyLogHandler.init)
 
         // let workitemsStack: [DistObject] = [
         //     DistObject<String>(value: "hello-1", actorSystem: systemA),
@@ -31,6 +31,8 @@ typealias DefaultDistributedActorSystem = ClusterSystem
             DocumentWorkItem(documentURL: URL(fileURLWithPath: "/d"), documentSize: 3, id: "1"),
         ]
 
+        let logger = PrintLogger()
+
         /// Value that is used by the following handler.
         var finished = false
         
@@ -39,6 +41,11 @@ typealias DefaultDistributedActorSystem = ClusterSystem
 
         let duration = Duration.seconds(20)
 
-        try! await WorkOrchestration<DocumentWorkItem>(workItemsStack: workitemsStack, parallelWorkers: 2).run(for: duration)
+        try! await WorkOrchestration<DocumentWorkItem, DocumentProcessingMessage>(
+            workItemsStack: workitemsStack, 
+            parallelWorkers: 2, 
+            workItemProcessorProducer: documentProcessorProducer,
+            logger: logger
+        ).run(for: duration)
     }
 }
