@@ -7,45 +7,57 @@ import Foundation
 typealias DefaultDistributedActorSystem = ClusterSystem
 
 @main enum Main {
-    static func main() async {
+    static func main() async throws{
         print("===-----------------------------------------------------===")
         print("|            Isolated Execution Sample App                |")
         print("|                                                         |")
         print("|        USAGE: swift run IsolatedExecutionDemo           |")
         print("===-----------------------------------------------------===")
 
-        // LoggingSystem.bootstrap(SamplePrettyLogHandler.init)
 
-        // let workitemsStack: [DistObject] = [
-        //     DistObject<String>(value: "hello-1", actorSystem: systemA),
-        //     DistObject<String>(value: "hello-2", actorSystem: systemB),
-        //     DistObject<String>(value: "hello-3", actorSystem: systemB),
-        //     DistObject<String>(value: "hello-4", actorSystem: systemC),
-        //     DistObject<String>(value: "hello-5", actorSystem: systemC)
-        // ]
-
-        let workitemsStack: [DocumentWorkItem] = [
-            DocumentWorkItem(documentURL: URL(fileURLWithPath: "/a"), documentSize: 2, id: "4"),
-            DocumentWorkItem(documentURL: URL(fileURLWithPath: "/b"), documentSize: 4, id: "3"),
-            DocumentWorkItem(documentURL: URL(fileURLWithPath: "/c"), documentSize: 1, id: "2"),
-            DocumentWorkItem(documentURL: URL(fileURLWithPath: "/d"), documentSize: 3, id: "1"),
-        ]
-
-        let logger = PrintLogger()
-
-        /// Value that is used by the following handler.
+        // Value that is used by the following handler.
         var finished = false
-        
-        /// This handler will be called when all work is done.
+
+        // This handler will be called when all work is done.
         let allDoneHandler = { finished = true }
 
-        let duration = Duration.seconds(20)
+        // Usage
+        let cluster = await ClusterSystem("Node-Orchestration") { settings in
+            settings.bindPort = 1111
+        }
 
-        try! await WorkOrchestration<DocumentWorkItem, DocumentProcessingMessage>(
-            workItemsStack: workitemsStack, 
-            parallelWorkers: 2, 
-            workItemProcessorProducer: documentProcessorProducer,
-            logger: logger
-        ).run(for: duration)
+        let workItem1 = DocumentWorkItem(id: 1, documentURL: URL(fileURLWithPath: "/path/to/document1"))
+        let workItem2 = DocumentWorkItem(id: 2, documentURL: URL(fileURLWithPath: "/path/to/document2"))
+        let workItem3 = DocumentWorkItem(id: 3, documentURL: URL(fileURLWithPath: "/path/to/document3"))
+        let workItems = [workItem1, workItem2, workItem3]
+
+        let orchestration = try await WorkOrchestration(workItems: workItems, parallelWorkers: 2, allDoneHandler: allDoneHandler, actorSystem: cluster)
+
+        // Start work in a background task.
+        Task {
+            try await orchestration.startWork()
+        }
+
+
+        // The following keeps the application alive until all work is done.
+        // The according implementation in an actual application might be smarter!
+        repeat {
+            
+            // Wait a bit before testing the `finished` value (again).
+            try await Task.sleep(nanoseconds: UInt64(0.1 * Double(NSEC_PER_SEC)))
+            
+            // The following code might stop a worker based on some random values.
+            if Int.random(in: 1...10) == 1 {
+                let randomProcessorId = Int.random(in: 1...workItems.count) 
+                try await orchestration.pauseProcessor(withId: randomProcessorId)
+                print("Paused processor with id \(randomProcessorId)!")
+
+                await Task.sleep(2_000_000_000)
+                try await orchestration.resumeProcessor(withId: randomProcessorId)
+                print("Resumed processor with id \(randomProcessorId)!")
+            }
+            
+        } while !finished
+
     }
 }
