@@ -1,4 +1,4 @@
-
+Please see the discussion in [this Swift forums topic](https://forums.swift.org/t/isolating-executions-by-using-distributed-actors/76531).
 
 ### Ausführung
 https://github.com/apple/swift-distributed-actors/tree/main clonen und im Verzeichnis daneben ("../") ablegen.
